@@ -47,3 +47,5 @@ yarn-error.log*
 
 # vscode
 .vscode
+
+src/scripts/data/*
