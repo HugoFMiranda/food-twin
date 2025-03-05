@@ -145,7 +145,7 @@ export default function SearchPage() {
                   isVegan: false,
                   portions: searchQuery.data.referenceFood.portions.map(p => ({
                     amount: p.amount,
-                    measureName: p.measureName,
+                    measureName: p.portionDescription,
                     gramWeight: p.gramWeight
                   }))
                 }}
@@ -166,7 +166,7 @@ export default function SearchPage() {
                     isVegan: false,
                     portions: food.portions.map(p => ({
                       amount: p.amount,
-                      measureName: p.measureName,
+                      measureName: p.portionDescription,
                       gramWeight: p.gramWeight
                     }))
                   }}

@@ -45,6 +45,9 @@ export const foodRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const referenceFood = await ctx.db.food.findFirst({
         where: { description: { contains: input.foodName.toLowerCase() } },
+        include: {
+          portions: true
+        }
       });
 
       if (!referenceFood) {
@@ -55,6 +58,9 @@ export const foodRouter = createTRPCRouter({
         where: {
           id: { not: referenceFood.id },
         },
+        include: {
+          portions: true
+        }
       });
 
       const results = foods.map(food => ({
@@ -82,8 +88,22 @@ export const foodRouter = createTRPCRouter({
         .slice(0, 10);
 
       return {
-        referenceFood,
-        similarFoods: filteredResults,
+        referenceFood: {
+          ...referenceFood,
+          portions: referenceFood.portions.map(p => ({
+            amount: p.amount,
+            portionDescription: p.portionDescription,
+            gramWeight: p.gramWeight
+          }))
+        },
+        similarFoods: filteredResults.map(food => ({
+          ...food,
+          portions: food.portions.map(p => ({
+            amount: p.amount,
+            portionDescription: p.portionDescription,
+            gramWeight: p.gramWeight
+          }))
+        }))
       };
     }),
 
