@@ -1,5 +1,6 @@
 import { postRouter } from "food-twin/server/api/routers/post";
 import { createCallerFactory, createTRPCRouter } from "food-twin/server/api/trpc";
+import { foodRouter } from "./routers/foodRouter";
 
 /**
  * This is the primary router for your server.
@@ -8,6 +9,7 @@ import { createCallerFactory, createTRPCRouter } from "food-twin/server/api/trpc
  */
 export const appRouter = createTRPCRouter({
   post: postRouter,
+  food: foodRouter,
 });
 
 // export type definition of API

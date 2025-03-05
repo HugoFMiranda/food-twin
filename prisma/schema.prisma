@@ -10,11 +10,127 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
+model Food {
+    id              String    @id @default(cuid())
+    fdcId           Int       @unique
+    description     String
+    foodClass       String?
+    category        String?
+    publicationDate DateTime?
+
+    // Main macros for quick filtering
+    protein  Float?
+    carbs    Float?
+    fat      Float?
+    calories Float?
+
+    // Relations
+    nutrients FoodNutrient[]
+    measures  Measure[]
+    brands    Brand[]
+    portions  FoodPortion[]
+
+    // Indices for performance
+    @@index([description])
+    @@index([protein]) // For "high protein" queries
+    @@index([calories]) // For calorie range queries
+    @@index([category]) // For category filtering
+}
+
+model FoodNutrient {
+    id           String @id @default(cuid())
+    foodId       String
+    nutrientId   Int
+    nutrientName String
+    unitName     String
+    amount       Float?
+    sourceId     Int?
+
+    // Relations
+    food   Food            @relation(fields: [foodId], references: [id])
+    source NutrientSource? @relation(fields: [sourceId], references: [sourceId])
+
+    @@unique([foodId, nutrientId])
+    @@index([foodId])
+    @@index([nutrientId])
+    @@index([sourceId])
+}
+
+model Measure {
+    id         String  @id @default(cuid())
+    fdcId      Int     @unique
+    foodId     String
+    amount     Float
+    unitName   String
+    modifier   String?
+    gramWeight Float
+    rank       Int?
+
+    // Relation to Food
+    food Food @relation(fields: [foodId], references: [id])
+
+    @@index([foodId])
+}
+
+model Brand {
+    id     String  @id @default(cuid())
+    fdcId  Int     @unique
+    foodId String
+    name   String
+    owner  String?
+
+    // Relation to Food
+    food Food @relation(fields: [foodId], references: [id])
+
+    @@index([foodId])
+    @@index([name])
+}
+
+model NutrientSource {
+    id          String  @id @default(cuid())
+    sourceId    Int     @unique
+    code        String?
+    description String?
+
+    // Relations
+    nutrients FoodNutrient[]
+
+    @@index([code])
+}
+
+model MeasureUnit {
+    id        String @id @default(cuid())
+    measureId Int    @unique // From measure_unit.csv 'id'
     name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
 
     @@index([name])
+}
+
+model FoodPortion {
+    id                 String  @id @default(cuid())
+    foodId             String
+    sequenceNumber     Int
+    amount             Float?
+    measureUnitId      Int?
+    portionDescription String?
+    modifier           String?
+    gramWeight         Float?
+    dataPoints         Int?
+    footnote           String?
+    minYearAcquired    Int?
+
+    // Relations
+    food Food @relation(fields: [foodId], references: [id])
+
+    @@unique([foodId, sequenceNumber])
+    @@index([foodId])
+    @@index([measureUnitId])
+}
+
+model ProteinConversionFactor {
+    id       String @id @default(cuid())
+    factorId Int    @unique // food_nutrient_conversion_factor_id
+    value    Float
+
+    @@index([value])
 }
