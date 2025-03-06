@@ -12,6 +12,9 @@ Food Twin is a modern web application that helps users find nutritionally simila
 - **Filtering Options**: Refine results with filters for protein ratio, maximum calories, and vegan options
 - **Visual Similarity Scores**: Color-coded similarity scores make it easy to identify the best matches
 - **Portion Information**: View common portion sizes and weights for each food
+- **Add Custom Foods**: Create and save your own food entries with custom nutritional values
+- **Dark Mode Support**: Enjoy a comfortable viewing experience in low-light environments
+- **Smooth Animations**: Polished user interface with smooth transitions and animations
 
 ## Technology Stack
 
@@ -28,7 +31,7 @@ Food Twin is built on the [T3 Stack](https://create.t3.gg/), a modern web develo
 
 ### Prerequisites
 
-- Node.js 16+ and npm/yarn
+- Node.js 16+ and npm/yarn/bun
 - Git
 
 ### Installation
@@ -44,6 +47,8 @@ Food Twin is built on the [T3 Stack](https://create.t3.gg/), a modern web develo
    npm install
    # or
    yarn install
+   # or
+   bun install
    ```
 
 3. Set up the database:
@@ -51,9 +56,13 @@ Food Twin is built on the [T3 Stack](https://create.t3.gg/), a modern web develo
    npx prisma db push
    ```
 
-4. Import food data (optional):
+4. Seed the database with sample food data:
    ```bash
-   npm run import-foods
+   npm run db:seed
+   # or
+   yarn db:seed
+   # or
+   bun run db:seed
    ```
 
 5. Start the development server:
@@ -61,6 +70,8 @@ Food Twin is built on the [T3 Stack](https://create.t3.gg/), a modern web develo
    npm run dev
    # or
    yarn dev
+   # or
+   bun run dev
    ```
 
 6. Open [http://localhost:3000](http://localhost:3000) in your browser
@@ -72,6 +83,50 @@ Food Twin is built on the [T3 Stack](https://create.t3.gg/), a modern web develo
 3. View the nutritional information of your selected food
 4. Explore similar foods ranked by nutritional similarity
 5. Use filters to refine your search results
+6. Toggle dark mode for a different visual experience
+7. Add your own custom foods using the "Add Food" feature
+
+## Development
+
+### Database Management
+
+- View and edit database content:
+  ```bash
+  npm run db:studio
+  # or
+  yarn db:studio
+  # or
+  bun run db:studio
+  ```
+
+- Reset and seed the database:
+  ```bash
+  npm run db:seed
+  # or
+  yarn db:seed
+  # or
+  bun run db:seed
+  ```
+
+### Code Quality
+
+- Run linting:
+  ```bash
+  npm run lint
+  # or
+  yarn lint
+  # or
+  bun run lint
+  ```
+
+- Format code:
+  ```bash
+  npm run format:write
+  # or
+  yarn format:write
+  # or
+  bun run format:write
+  ```
 
 ## Deployment
 
