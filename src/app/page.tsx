@@ -1,8 +1,5 @@
 import Link from "next/link";
 
-import { LatestPost } from "food-twin/app/_components/post";
-import { api, HydrateClient } from "food-twin/trpc/server";
-
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
