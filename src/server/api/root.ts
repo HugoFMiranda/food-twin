@@ -1,4 +1,3 @@
-import { postRouter } from "food-twin/server/api/routers/post";
 import { createCallerFactory, createTRPCRouter } from "food-twin/server/api/trpc";
 import { foodRouter } from "./routers/foodRouter";
 
@@ -8,7 +7,6 @@ import { foodRouter } from "./routers/foodRouter";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  post: postRouter,
   food: foodRouter,
 });
 

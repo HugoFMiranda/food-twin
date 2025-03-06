@@ -17,6 +17,7 @@ model Food {
     foodClass       String?
     category        String?
     publicationDate DateTime?
+    isUserCreated   Boolean   @default(false) // Flag to mark user-created foods
 
     // Main macros for quick filtering
     protein  Float?
@@ -32,9 +33,10 @@ model Food {
 
     // Indices for performance
     @@index([description])
-    @@index([protein]) // For "high protein" queries
+    @@index([protein]) // For high protein queries
     @@index([calories]) // For calorie range queries
     @@index([category]) // For category filtering
+    @@index([isUserCreated]) // For filtering user-created foods
 }
 
 model FoodNutrient {
@@ -66,7 +68,6 @@ model Measure {
     gramWeight Float
     rank       Int?
 
-    // Relation to Food
     food Food @relation(fields: [foodId], references: [id])
 
     @@index([foodId])
@@ -79,7 +80,6 @@ model Brand {
     name   String
     owner  String?
 
-    // Relation to Food
     food Food @relation(fields: [foodId], references: [id])
 
     @@index([foodId])
@@ -92,7 +92,6 @@ model NutrientSource {
     code        String?
     description String?
 
-    // Relations
     nutrients FoodNutrient[]
 
     @@index([code])
@@ -119,7 +118,6 @@ model FoodPortion {
     footnote           String?
     minYearAcquired    Int?
 
-    // Relations
     food Food @relation(fields: [foodId], references: [id])
 
     @@unique([foodId, sequenceNumber])
