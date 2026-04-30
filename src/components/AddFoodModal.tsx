@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { api } from "food-twin/trpc/react";
+import type { RouterOutputs } from "food-twin/trpc/react";
 
 type Portion = {
   amount: number | null;
@@ -12,7 +13,7 @@ type Portion = {
 type AddFoodModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: (food: any) => void;
+  onSuccess?: (food: RouterOutputs['food']['createFood']) => void;
   darkMode?: boolean;
 };
 
@@ -28,11 +29,15 @@ export default function AddFoodModal({ isOpen, onClose, onSuccess, darkMode = fa
   ]);
   const [error, setError] = useState('');
 
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
   const createFoodMutation = api.food.createFood.useMutation({
     onSuccess: (data) => {
       onSuccess?.(data);
-      onClose();
-      resetForm();
+      handleClose();
     },
     onError: (error) => {
       setError(error.message);
@@ -125,7 +130,7 @@ export default function AddFoodModal({ isOpen, onClose, onSuccess, darkMode = fa
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Add New Food</h2>
           <button 
-            onClick={onClose}
+            onClick={handleClose}
             className={`hover:opacity-80 transition-opacity ${
               darkMode ? 'text-gray-300' : 'text-gray-500'
             }`}
@@ -366,7 +371,7 @@ export default function AddFoodModal({ isOpen, onClose, onSuccess, darkMode = fa
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={handleClose}
                   className={`px-4 py-2 border rounded transition-colors ${
                     darkMode 
                       ? 'border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600' 
