@@ -17,7 +17,8 @@ model Food {
     foodClass       String?
     category        String?
     publicationDate DateTime?
-    isUserCreated   Boolean   @default(false) // Flag to mark user-created foods
+    isUserCreated   Boolean   @default(false)
+    isVegan         Boolean   @default(false)
 
     // Main macros for quick filtering
     protein  Float?
@@ -36,7 +37,8 @@ model Food {
     @@index([protein]) // For high protein queries
     @@index([calories]) // For calorie range queries
     @@index([category]) // For category filtering
-    @@index([isUserCreated]) // For filtering user-created foods
+    @@index([isUserCreated])
+    @@index([isVegan])
 }
 
 model FoodNutrient {

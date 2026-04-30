@@ -91,6 +91,7 @@ function generateFood(index: number) {
         category: generateCategory(),
         publicationDate: new Date(),
         isUserCreated: randomBoolean(0.2),
+        isVegan: randomBoolean(0.35),
         protein,
         carbs,
         fat,
