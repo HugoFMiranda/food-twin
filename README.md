@@ -1,152 +1,98 @@
 # Food Twin
 
-Food Twin is a modern web application that helps users find nutritionally similar foods based on macronutrient profiles. Built with the T3 Stack, this application provides a powerful and intuitive interface for comparing foods and discovering alternatives.
+Find foods with identical nutritional profiles. Search any food, get a ranked list of alternatives with the closest macro match — swap ingredients without changing your targets.
 
-![Food Twin](https://via.placeholder.com/800x400?text=Food+Twin+Screenshot)
+Built with the [T3 Stack](https://create.t3.gg/) · Data from [Open Food Facts](https://world.openfoodfacts.org/)
 
 ## Features
 
-- **Smart Food Search**: Quickly search for foods with real-time suggestions
-- **Nutritional Similarity**: Find foods with similar macronutrient profiles using advanced similarity algorithms
-- **Detailed Nutritional Information**: View comprehensive nutritional data including calories, protein, carbs, and fat
-- **Filtering Options**: Refine results with filters for protein ratio, maximum calories, and vegan options
-- **Visual Similarity Scores**: Color-coded similarity scores make it easy to identify the best matches
-- **Portion Information**: View common portion sizes and weights for each food
-- **Add Custom Foods**: Create and save your own food entries with custom nutritional values
-- **Dark Mode Support**: Enjoy a comfortable viewing experience in low-light environments
-- **Smooth Animations**: Polished user interface with smooth transitions and animations
+- **Autocomplete search** with real-time suggestions as you type
+- **Macro similarity ranking** — normalized Euclidean distance across protein, carbs, fat and calories
+- **Visual macro bars** — stacked protein/carbs/fat breakdown with per-food diff indicators vs the reference
+- **Filters** — minimum protein ratio, calorie ceiling, vegan-only
+- **Keyboard navigation** in the suggestion dropdown (↑ ↓ Enter Esc)
+- **Dark mode** — persisted to `localStorage`, respects system preference on first visit
+- **Add custom foods** — create entries with your own macro values and portion sizes
+- **Portion display** — common serving sizes shown per food
 
-## Technology Stack
+## Stack
 
-Food Twin is built on the [T3 Stack](https://create.t3.gg/), a modern web development stack that includes:
-
-- **[Next.js](https://nextjs.org)**: React framework for server-rendered applications
-- **[TypeScript](https://www.typescriptlang.org/)**: Type-safe JavaScript for better developer experience
-- **[Tailwind CSS](https://tailwindcss.com)**: Utility-first CSS framework for rapid UI development
-- **[tRPC](https://trpc.io)**: End-to-end typesafe API layer
-- **[Prisma](https://prisma.io)**: Next-generation ORM for database access
-- **[SQLite](https://www.sqlite.org/)**: Lightweight database for storing food nutritional data
+| Layer | Tech |
+|-------|------|
+| Framework | Next.js 15 (App Router, Turbopack) |
+| API | tRPC v11 |
+| Database | SQLite via Prisma |
+| Styling | Tailwind CSS |
+| Language | TypeScript |
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 16+ and npm/yarn/bun
-- Git
+- [Bun](https://bun.sh) — used as the package manager and runtime
 
 ### Installation
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/food-twin.git
-   cd food-twin
-   ```
+```bash
+git clone https://github.com/yourusername/food-twin.git
+cd food-twin
+bun install
+```
 
-2. Install dependencies:
-   ```bash
-   npm install
-   # or
-   yarn install
-   # or
-   bun install
-   ```
+### Environment
 
-3. Set up the database:
-   ```bash
-   npx prisma db push
-   ```
+Copy the example env file and fill in the values:
 
-4. Seed the database with sample food data:
-   ```bash
-   npm run db:seed
-   # or
-   yarn db:seed
-   # or
-   bun run db:seed
-   ```
+```bash
+cp .env.example .env
+```
 
-5. Start the development server:
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   # or
-   bun run dev
-   ```
+```env
+DATABASE_URL="file:./db.sqlite"
+USDA_API_KEY="placeholder"   # not currently used
+```
 
-6. Open [http://localhost:3000](http://localhost:3000) in your browser
+### Database setup
 
-## Usage
+```bash
+bun db:push          # create db.sqlite and apply schema
+bun db:seed:off      # import real foods from Open Food Facts (~1200 foods)
+```
 
-1. Enter a food name in the search box
-2. Select a food from the suggestions or press the Search button
-3. View the nutritional information of your selected food
-4. Explore similar foods ranked by nutritional similarity
-5. Use filters to refine your search results
-6. Toggle dark mode for a different visual experience
-7. Add your own custom foods using the "Add Food" feature
+`db:seed` is also available if you just want the 100-food random placeholder dataset.
 
-## Development
+### Run
 
-### Database Management
+```bash
+bun dev              # http://localhost:3000
+```
 
-- View and edit database content:
-  ```bash
-  npm run db:studio
-  # or
-  yarn db:studio
-  # or
-  bun run db:studio
-  ```
+## Scripts
 
-- Reset and seed the database:
-  ```bash
-  npm run db:seed
-  # or
-  yarn db:seed
-  # or
-  bun run db:seed
-  ```
+| Command | Description |
+|---------|-------------|
+| `bun dev` | Start dev server with Turbopack |
+| `bun build` | Production build |
+| `bun check` | Lint + TypeScript type check |
+| `bun format:write` | Format all files with Prettier |
+| `bun db:push` | Apply schema changes to database |
+| `bun db:seed` | Seed with 100 random placeholder foods |
+| `bun db:seed:off` | Seed with real data from Open Food Facts |
+| `bun db:studio` | Open Prisma Studio GUI |
 
-### Code Quality
+## How the similarity algorithm works
 
-- Run linting:
-  ```bash
-  npm run lint
-  # or
-  yarn lint
-  # or
-  bun run lint
-  ```
+All macros are normalized against daily reference values (2000 kcal, 50g protein, 300g carbs, 65g fat) before computing Euclidean distance. This prevents calories from dominating the score.
 
-- Format code:
-  ```bash
-  npm run format:write
-  # or
-  yarn format:write
-  # or
-  bun run format:write
-  ```
+Candidate pool: foods within ±200% of the reference food's calories are pre-selected (up to 500), falling back to the full pool if fewer than 20 qualify. The top 10 closest matches are returned.
 
 ## Deployment
 
-This application can be easily deployed to:
+The app deploys as a standard Next.js project. SQLite is file-based so you'll need persistent storage (e.g. a volume on Railway or Fly.io) for the database file.
 
-- [Vercel](https://vercel.com) (recommended for Next.js applications)
-- [Netlify](https://netlify.com)
-- [Docker](https://www.docker.com/)
-
-For detailed deployment instructions, refer to the [T3 deployment guides](https://create.t3.gg/en/deployment/vercel).
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+- [Vercel](https://vercel.com) — works for the frontend but requires an external database (SQLite is ephemeral on serverless)
+- [Railway](https://railway.app) / [Fly.io](https://fly.io) — recommended, supports persistent volumes
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- Food data provided by [USDA FoodData Central](https://fdc.nal.usda.gov/)
-- Built with the [T3 Stack](https://create.t3.gg/)
+MIT — see [LICENSE](./LICENSE)
