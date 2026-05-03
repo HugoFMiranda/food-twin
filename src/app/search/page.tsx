@@ -309,7 +309,7 @@ export default function SearchPage() {
     },
   );
 
-  const searchQuery = api.food.getSimilarFoods.useQuery<SearchResult>(
+  const searchQuery = api.food.getSimilarFoods.useQuery(
     { foodName: selectedFood, filters },
     {
       enabled: selectedFood.length > 0,
