@@ -104,7 +104,7 @@ export default function AddFoodModal({ isOpen, onClose, onSuccess, darkMode = fa
 
     // Filter out empty portions
     const validPortions = portions.filter(
-      p => p.portionDescription || p.amount || p.gramWeight
+      p => p.portionDescription ?? p.amount ?? p.gramWeight
     );
 
     createFoodMutation.mutate({
@@ -183,7 +183,7 @@ export default function AddFoodModal({ isOpen, onClose, onSuccess, darkMode = fa
                   type="number"
                   min="0"
                   step="0.1"
-                  value={calories === null ? '' : calories}
+                  value={calories ?? ''}
                   onChange={(e) => setCalories(e.target.value ? parseFloat(e.target.value) : null)}
                   className={`w-full p-2 border rounded transition-colors ${
                     darkMode 
@@ -201,7 +201,7 @@ export default function AddFoodModal({ isOpen, onClose, onSuccess, darkMode = fa
                   type="number"
                   min="0"
                   step="0.1"
-                  value={protein === null ? '' : protein}
+                  value={protein ?? ''}
                   onChange={(e) => setProtein(e.target.value ? parseFloat(e.target.value) : null)}
                   className={`w-full p-2 border rounded transition-colors ${
                     darkMode 
@@ -219,7 +219,7 @@ export default function AddFoodModal({ isOpen, onClose, onSuccess, darkMode = fa
                   type="number"
                   min="0"
                   step="0.1"
-                  value={carbs === null ? '' : carbs}
+                  value={carbs ?? ''}
                   onChange={(e) => setCarbs(e.target.value ? parseFloat(e.target.value) : null)}
                   className={`w-full p-2 border rounded transition-colors ${
                     darkMode 
@@ -237,7 +237,7 @@ export default function AddFoodModal({ isOpen, onClose, onSuccess, darkMode = fa
                   type="number"
                   min="0"
                   step="0.1"
-                  value={fat === null ? '' : fat}
+                  value={fat ?? ''}
                   onChange={(e) => setFat(e.target.value ? parseFloat(e.target.value) : null)}
                   className={`w-full p-2 border rounded transition-colors ${
                     darkMode 
@@ -293,7 +293,7 @@ export default function AddFoodModal({ isOpen, onClose, onSuccess, darkMode = fa
                     }`}>Description</label>
                     <input
                       type="text"
-                      value={portion.portionDescription || ''}
+                      value={portion.portionDescription ?? ''}
                       onChange={(e) => handlePortionChange(index, 'portionDescription', e.target.value)}
                       className={`w-full p-2 border rounded transition-colors ${
                         darkMode 
@@ -311,7 +311,7 @@ export default function AddFoodModal({ isOpen, onClose, onSuccess, darkMode = fa
                       type="number"
                       min="0"
                       step="0.1"
-                      value={portion.amount === null ? '' : portion.amount}
+                      value={portion.amount ?? ''}
                       onChange={(e) => handlePortionChange(index, 'amount', e.target.value)}
                       className={`w-full p-2 border rounded transition-colors ${
                         darkMode 
@@ -329,7 +329,7 @@ export default function AddFoodModal({ isOpen, onClose, onSuccess, darkMode = fa
                       type="number"
                       min="0"
                       step="0.1"
-                      value={portion.gramWeight === null ? '' : portion.gramWeight}
+                      value={portion.gramWeight ?? ''}
                       onChange={(e) => handlePortionChange(index, 'gramWeight', e.target.value)}
                       className={`w-full p-2 border rounded transition-colors ${
                         darkMode 

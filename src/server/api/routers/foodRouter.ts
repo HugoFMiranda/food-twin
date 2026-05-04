@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
+import { getAIFoodData, isAISearchAvailable } from "food-twin/server/ai";
 
 const FilterSchema = z.object({
   minProteinRatio: z.number().min(0).max(1).optional(),
@@ -172,6 +173,62 @@ export const foodRouter = createTRPCRouter({
       });
 
       return foods.map(food => food.description);
+    }),
+
+  getAISearchAvailable: publicProcedure
+    .query(() => isAISearchAvailable()),
+
+  getAISimilarFoods: publicProcedure
+    .input(z.object({ foodName: z.string().min(1) }))
+    .query(async ({ input }) => {
+      const data = await getAIFoodData(input.foodName);
+
+      const ref = data.referenceFood;
+      const refCalories = ref.calories;
+      const refProtein = ref.protein;
+      const refCarbs = ref.carbs;
+      const refFat = ref.fat;
+
+      const candidates = data.candidates.map((food, index) => {
+        const similarity = Math.sqrt(
+          Math.pow((food.calories - refCalories) / 2000, 2) +
+          Math.pow((food.protein - refProtein) / 50, 2) +
+          Math.pow((food.carbs - refCarbs) / 300, 2) +
+          Math.pow((food.fat - refFat) / 65, 2),
+        );
+        const proteinRatio = food.calories > 0 ? (food.protein * 4) / food.calories : 0;
+        return {
+          id: `ai-${index}`,
+          description: food.description,
+          calories: food.calories,
+          protein: food.protein,
+          carbs: food.carbs,
+          fat: food.fat,
+          isVegan: food.isVegan,
+          isUserCreated: false,
+          portions: [] as { amount: number | null; portionDescription: string | null; gramWeight: number | null }[],
+          similarity,
+          proteinRatio,
+        };
+      });
+
+      const similarFoods = candidates
+        .sort((a, b) => a.similarity - b.similarity)
+        .slice(0, 10);
+
+      return {
+        referenceFood: {
+          description: ref.description,
+          calories: ref.calories,
+          protein: ref.protein,
+          carbs: ref.carbs,
+          fat: ref.fat,
+          isVegan: ref.isVegan,
+          isUserCreated: false,
+          portions: [] as { amount: number | null; portionDescription: string | null; gramWeight: number | null }[],
+        },
+        similarFoods,
+      };
     }),
 
   createFood: publicProcedure

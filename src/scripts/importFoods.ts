@@ -3,6 +3,35 @@ import fs from 'fs';
 import { parse } from 'csv-parse';
 import path from 'path';
 
+interface MeasureUnitRow {
+  id: string;
+  name: string;
+}
+
+interface NutrientSourceRow {
+  id: string;
+  code: string;
+  description: string;
+}
+
+interface NutrientRefRow {
+  id: string;
+  name: string;
+  unit_name: string;
+}
+
+interface ProteinFactorRow {
+  food_nutrient_conversion_factor_id: string;
+  value: string;
+}
+
+interface FoodNutrientRow {
+  fdc_id: string;
+  nutrient_id: string;
+  amount: string;
+  nutrient_source_id: string;
+}
+
 const prisma = new PrismaClient();
 
 async function importFoods() {
@@ -18,7 +47,7 @@ async function importFoods() {
       skip_empty_lines: true
     }));
 
-  for await (const row of measureUnitParser) {
+  for await (const row of measureUnitParser as AsyncIterable<MeasureUnitRow>) {
     try {
       await prisma.measureUnit.upsert({
         where: {
@@ -47,7 +76,7 @@ async function importFoods() {
       skip_empty_lines: true
     }));
 
-  for await (const row of proteinFactorParser) {
+  for await (const row of proteinFactorParser as AsyncIterable<ProteinFactorRow>) {
     try {
       await prisma.proteinConversionFactor.upsert({
         where: {
@@ -76,7 +105,7 @@ async function importFoods() {
       skip_empty_lines: true
     }));
 
-  for await (const row of sourceParser) {
+  for await (const row of sourceParser as AsyncIterable<NutrientSourceRow>) {
     try {
       await prisma.nutrientSource.upsert({
         where: {
@@ -109,7 +138,7 @@ async function importFoods() {
     }));
 
   console.log('Loading nutrient reference data...');
-  for await (const row of nutrientRefParser) {
+  for await (const row of nutrientRefParser as AsyncIterable<NutrientRefRow>) {
     nutrientMap.set(parseInt(row.id), {
       name: row.name,
       unit: row.unit_name
@@ -173,15 +202,7 @@ async function importFoods() {
 
   // Import food portions
   console.log('Importing food portions...');
-  const portionPath = path.join(dataDir, 'food_portion.csv');
-  const portionParser = fs
-    .createReadStream(portionPath)
-    .pipe(parse({
-      columns: true,
-      skip_empty_lines: true
-    }));
-
-  let portionCount = 0;
+  const portionCount = 0;
   // for await (const row of portionParser) {
   //   try {
   //     const fdcId = parseInt(row.fdc_id);
@@ -250,7 +271,7 @@ async function importFoods() {
   let nutrientCount = 0;
   let skippedCount = 0;
 
-  for await (const row of nutrientParser) {
+  for await (const row of nutrientParser as AsyncIterable<FoodNutrientRow>) {
     try {
       const fdcId = parseInt(row.fdc_id);
       const nutrientId = parseInt(row.nutrient_id);

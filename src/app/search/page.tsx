@@ -271,6 +271,7 @@ export default function SearchPage() {
   const [filterError, setFilterError] = useState<string | null>(null);
   const [darkMode, setDarkMode] = useState(false);
   const [isSearchTimedOut, setIsSearchTimedOut] = useState(false);
+  const [aiMode, setAiMode] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -300,6 +301,12 @@ export default function SearchPage() {
     setHighlightedIndex(-1);
   }, [debouncedSearchTerm]);
 
+  const aiAvailableQuery = api.food.getAISearchAvailable.useQuery(undefined, {
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+  });
+  const aiAvailable = aiAvailableQuery.data ?? false;
+
   const suggestionsQuery = api.food.getFoodSuggestions.useQuery(
     { searchTerm: debouncedSearchTerm },
     {
@@ -309,10 +316,10 @@ export default function SearchPage() {
     },
   );
 
-  const searchQuery = api.food.getSimilarFoods.useQuery(
+  const dbSearchQuery = api.food.getSimilarFoods.useQuery(
     { foodName: selectedFood, filters },
     {
-      enabled: selectedFood.length > 0,
+      enabled: selectedFood.length > 0 && !aiMode,
       retry: 0,
       staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
@@ -320,6 +327,20 @@ export default function SearchPage() {
       refetchInterval: false,
     },
   );
+
+  const aiSearchQuery = api.food.getAISimilarFoods.useQuery(
+    { foodName: selectedFood },
+    {
+      enabled: selectedFood.length > 0 && aiMode,
+      retry: 0,
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      gcTime: 0,
+      refetchInterval: false,
+    },
+  );
+
+  const searchQuery = aiMode ? aiSearchQuery : dbSearchQuery;
 
   useEffect(() => {
     let id: ReturnType<typeof setTimeout> | null = null;
@@ -358,6 +379,7 @@ export default function SearchPage() {
     setSearchTerm(suggestion);
     setShowSuggestions(false);
     setHighlightedIndex(-1);
+    setAiMode(false);
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -365,6 +387,7 @@ export default function SearchPage() {
     if (searchTerm.trim()) {
       setSelectedFood(searchTerm.trim());
       setShowSuggestions(false);
+      setAiMode(false);
     }
   };
 
@@ -560,6 +583,32 @@ export default function SearchPage() {
             )}
           </button>
 
+          {aiAvailable && (
+            <button
+              type="button"
+              onClick={() => {
+                const next = !aiMode;
+                setAiMode(next);
+                if (searchTerm.trim()) {
+                  setSelectedFood(searchTerm.trim());
+                }
+              }}
+              title={aiMode ? 'Switch back to database search' : 'Search using AI (works for any food)'}
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium ${
+                aiMode
+                  ? 'bg-violet-600 hover:bg-violet-700 text-white'
+                  : darkMode
+                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-300 border border-gray-600'
+                    : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 shadow-sm'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+              </svg>
+              AI
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => setIsAddFoodModalOpen(true)}
@@ -754,15 +803,26 @@ export default function SearchPage() {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
               </svg>
-              No food found
+              No food found in database
             </div>
             <p className="mt-1 text-sm ml-6">
               &ldquo;{selectedFood}&rdquo; wasn&apos;t found in the database.{' '}
+              {aiAvailable ? (
+                <>
+                  <button
+                    onClick={() => setAiMode(true)}
+                    className={`underline font-medium ${darkMode ? 'text-violet-400 hover:text-violet-300' : 'text-violet-700 hover:text-violet-900'}`}
+                  >
+                    Search with AI
+                  </button>
+                  {' or '}
+                </>
+              ) : null}
               <button
                 onClick={() => setIsAddFoodModalOpen(true)}
                 className={`underline font-medium ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'}`}
               >
-                Add it yourself
+                add it yourself
               </button>
               .
             </p>
@@ -784,6 +844,16 @@ export default function SearchPage() {
         {/* Results */}
         {refFood && similarFoods.length > 0 && (
           <div className="space-y-6 animate-fade-in">
+            {aiMode && (
+              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium ${
+                darkMode ? 'bg-violet-900/30 text-violet-300 border border-violet-800' : 'bg-violet-50 text-violet-700 border border-violet-200'
+              }`}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                </svg>
+                AI-generated results — nutritional data estimated by Claude
+              </div>
+            )}
             <div>
               <div className={`text-xs font-semibold uppercase tracking-wider mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 Reference food
