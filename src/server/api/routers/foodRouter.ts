@@ -9,28 +9,29 @@ const FilterSchema = z.object({
 });
 
 const CreateFoodSchema = z.object({
-  description: z.string().min(3, "Food name must be at least 3 characters"),
-  protein: z.number().min(0).nullable(),
-  carbs: z.number().min(0).nullable(),
-  fat: z.number().min(0).nullable(),
-  calories: z.number().min(0).nullable(),
+  description: z.string().min(3, "Food name must be at least 3 characters").max(200),
+  protein: z.number().min(0).max(10000).nullable(),
+  carbs: z.number().min(0).max(10000).nullable(),
+  fat: z.number().min(0).max(10000).nullable(),
+  calories: z.number().min(0).max(10000).nullable(),
   isVegan: z.boolean().default(false),
   portions: z.array(z.object({
-    amount: z.number().nullable(),
-    portionDescription: z.string().nullable(),
-    gramWeight: z.number().nullable(),
-  })).optional(),
+    amount: z.number().min(0).max(10000).nullable(),
+    portionDescription: z.string().max(200).nullable(),
+    gramWeight: z.number().min(0).max(10000).nullable(),
+  })).max(20).optional(),
 });
 
 export const foodRouter = createTRPCRouter({
   getSimilarFoods: publicProcedure
     .input(z.object({
-      foodName: z.string(),
+      foodName: z.string().min(1).max(200),
       filters: FilterSchema.optional(),
     }))
     .query(async ({ ctx, input }) => {
+      let timeoutId: ReturnType<typeof setTimeout>;
       const timeout = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error("Search timed out. Please try again.")), 10000);
+        timeoutId = setTimeout(() => reject(new Error("Search timed out. Please try again.")), 10000);
       });
 
       try {
@@ -152,8 +153,10 @@ export const foodRouter = createTRPCRouter({
           timeout,
         ]);
 
+        clearTimeout(timeoutId!);
         return result;
       } catch (error) {
+        clearTimeout(timeoutId!);
         if (error instanceof Error) {
           throw new Error(`Error searching for similar foods: ${error.message}`);
         }
@@ -162,12 +165,13 @@ export const foodRouter = createTRPCRouter({
     }),
 
   getFoodSuggestions: publicProcedure
-    .input(z.object({ searchTerm: z.string() }))
+    .input(z.object({ searchTerm: z.string().max(200) }))
     .query(async ({ ctx, input }) => {
-      if (!input.searchTerm.trim()) return [];
+      const trimmed = input.searchTerm.trim();
+      if (!trimmed) return [];
 
       const foods = await ctx.db.food.findMany({
-        where: { description: { contains: input.searchTerm } },
+        where: { description: { contains: trimmed } },
         take: 10,
         select: { description: true },
       });
@@ -179,7 +183,7 @@ export const foodRouter = createTRPCRouter({
     .query(() => isAISearchAvailable()),
 
   getAISimilarFoods: publicProcedure
-    .input(z.object({ foodName: z.string().min(1) }))
+    .input(z.object({ foodName: z.string().min(1).max(200) }))
     .query(async ({ input }) => {
       const data = await getAIFoodData(input.foodName);
 

@@ -10,6 +10,7 @@ Built with the [T3 Stack](https://create.t3.gg/) · Data from [Open Food Facts](
 - **Macro similarity ranking** — normalized Euclidean distance across protein, carbs, fat and calories
 - **Visual macro bars** — stacked protein/carbs/fat breakdown with per-food diff indicators vs the reference
 - **Filters** — minimum protein ratio, calorie ceiling, vegan-only
+- **AI search** — when `ANTHROPIC_API_KEY` is set, the AI button unlocks; works for any food not in the database
 - **Keyboard navigation** in the suggestion dropdown (↑ ↓ Enter Esc)
 - **Dark mode** — persisted to `localStorage`, respects system preference on first visit
 - **Add custom foods** — create entries with your own macro values and portion sizes
@@ -49,7 +50,8 @@ cp .env.example .env
 
 ```env
 DATABASE_URL="file:./db.sqlite"
-USDA_API_KEY="placeholder"   # not currently used
+USDA_API_KEY="your-key"        # required by the Open Food Facts seeder (bun db:seed:off)
+ANTHROPIC_API_KEY="sk-ant-..."  # optional — enables the AI search button
 ```
 
 ### Database setup

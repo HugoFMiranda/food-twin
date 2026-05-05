@@ -353,12 +353,8 @@ export default function SearchPage() {
   }, [searchQuery.isLoading]);
 
   useEffect(() => {
-    if (searchQuery.error) {
-      if (searchQuery.error.message.includes("minProteinRatio")) {
-        setFilterError("Protein ratio must be between 0 and 1. Please adjust your filters.");
-      } else {
-        setFilterError(searchQuery.error.message);
-      }
+    if (searchQuery.error?.message.includes("minProteinRatio")) {
+      setFilterError("Protein ratio must be between 0 and 1. Please adjust your filters.");
     } else {
       setFilterError(null);
     }

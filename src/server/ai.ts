@@ -27,6 +27,8 @@ export async function getAIFoodData(foodName: string) {
     throw new Error("AI search requires ANTHROPIC_API_KEY to be configured.");
   }
 
+  const sanitizedName = foodName.replace(/["\\\n\r]/g, " ").trim().slice(0, 200);
+
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 
   const message = await client.messages.create({
@@ -35,7 +37,7 @@ export async function getAIFoodData(foodName: string) {
     messages: [
       {
         role: "user",
-        content: `You are a nutritional database. For the food "${foodName}", return its macros and 25 nutritionally diverse alternatives.
+        content: `You are a nutritional database. For the food "${sanitizedName}", return its macros and 25 nutritionally diverse alternatives.
 
 Respond ONLY with valid JSON in this exact format (no markdown, no explanation):
 {
