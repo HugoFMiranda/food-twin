@@ -52,6 +52,10 @@ All API calls go through a single tRPC endpoint at `/api/trpc/[trpc]`. There is 
 - Returns top 10 matches sorted by distance; 10-second timeout
 - Scores color-coded on the frontend: green (≥90%) → lime → amber → orange → rose
 
+### Portion Calculator
+
+Each `FoodCard` maintains its own `portionGrams` state (default 100g). All displayed macro and calorie values are scaled by `portionGrams / 100`. USDA predefined portions render as quick-set buttons that set the gram input. The reference food card exposes an `onPortionChange` callback so `SearchPage` can keep a `referencePortion` state and pass scaled reference macros to all similar-food diff indicators, ensuring the comparison is always between the chosen portions on both sides.
+
 ### State & Data Flow
 
 - **Server state**: React Query via tRPC hooks (`api.food.xxx.useQuery`)
