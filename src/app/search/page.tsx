@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useId } from 'react';
 import { api } from "food-twin/trpc/react";
 import AddFoodModal from 'food-twin/components/AddFoodModal';
 
@@ -141,6 +141,7 @@ function FoodCard({
   similarity,
   darkMode = false,
   reference,
+  onPortionChange,
 }: {
   food: {
     name: string;
@@ -159,7 +160,23 @@ function FoodCard({
   similarity?: number;
   darkMode?: boolean;
   reference?: MacroRef;
+  onPortionChange?: (grams: number) => void;
 }) {
+  const [portionGrams, setPortionGrams] = useState(100);
+  const portionInputId = useId();
+
+  const handlePortionChange = (grams: number) => {
+    const clamped = Math.max(1, Math.min(10000, grams));
+    setPortionGrams(clamped);
+    onPortionChange?.(clamped);
+  };
+
+  const scale = portionGrams / 100;
+  const scaledCalories = food.calories * scale;
+  const scaledProtein = food.protein * scale;
+  const scaledCarbs = food.carbs * scale;
+  const scaledFat = food.fat * scale;
+
   const normalizedScore = similarity !== undefined ? 1 / (1 + similarity) : undefined;
 
   const scoreBadge = (() => {
@@ -179,7 +196,7 @@ function FoodCard({
     return { bg: 'bg-rose-100', text: 'text-rose-700', label: `${pct.toFixed(1)}% match` };
   })();
 
-  const calDiff = reference !== undefined ? food.calories - reference.calories : 0;
+  const calDiff = reference !== undefined ? scaledCalories - reference.calories : 0;
 
   return (
     <div className={`p-4 border rounded-xl transition-colors ${
@@ -213,7 +230,7 @@ function FoodCard({
 
       <div className="mt-2 flex items-baseline gap-2">
         <span className={`text-2xl font-bold tabular-nums ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-          {food.calories.toFixed(0)}
+          {scaledCalories.toFixed(0)}
         </span>
         <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>kcal</span>
         {reference !== undefined && Math.abs(calDiff) >= 1 && (
@@ -227,34 +244,68 @@ function FoodCard({
       </div>
 
       <MacroBar
-        protein={food.protein}
-        carbs={food.carbs}
-        fat={food.fat}
+        protein={scaledProtein}
+        carbs={scaledCarbs}
+        fat={scaledFat}
         darkMode={darkMode}
         reference={reference}
       />
 
-      {food.portions && food.portions.length > 0 && (
-        <div className="mt-3">
-          <div className={`text-xs mb-1.5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Portions</div>
-          <div className="flex flex-wrap gap-1.5">
-            {food.portions.slice(0, 4).map((portion, idx) =>
-              portion.measureName ? (
-                <span
-                  key={idx}
-                  className={`text-xs px-2 py-0.5 rounded ${
-                    darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'
-                  }`}
-                >
-                  {portion.amount ? `${portion.amount} ` : ''}
-                  {portion.measureName}
-                  {portion.gramWeight ? ` (${portion.gramWeight}g)` : ''}
-                </span>
-              ) : null,
-            )}
-          </div>
+      <div className={`mt-3 pt-3 border-t ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <label
+            htmlFor={portionInputId}
+            className={`text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+          >
+            Portion:
+          </label>
+          <input
+            id={portionInputId}
+            type="number"
+            min="1"
+            max="10000"
+            value={portionGrams}
+            onChange={e => handlePortionChange(Number(e.target.value) || 100)}
+            className={`w-20 text-sm px-2 py-1 rounded border focus:outline-none focus:ring-1 focus:ring-blue-500 tabular-nums ${
+              darkMode
+                ? 'bg-gray-700 border-gray-600 text-white'
+                : 'bg-white border-gray-300 text-gray-900'
+            }`}
+          />
+          <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>g</span>
+          {portionGrams !== 100 && (
+            <button
+              type="button"
+              onClick={() => handlePortionChange(100)}
+              className={`text-xs underline ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'}`}
+            >
+              reset
+            </button>
+          )}
         </div>
-      )}
+        {food.portions && food.portions.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {food.portions.filter(p => p.gramWeight && p.measureName).slice(0, 4).map((portion, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => handlePortionChange(portion.gramWeight!)}
+                className={`text-xs px-2 py-0.5 rounded transition-colors ${
+                  portionGrams === portion.gramWeight
+                    ? 'bg-blue-600 text-white'
+                    : darkMode
+                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {portion.amount ? `${portion.amount} ` : ''}
+                {portion.measureName}
+                {` (${portion.gramWeight}g)`}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -272,6 +323,7 @@ export default function SearchPage() {
   const [darkMode, setDarkMode] = useState(false);
   const [isSearchTimedOut, setIsSearchTimedOut] = useState(false);
   const [aiMode, setAiMode] = useState(false);
+  const [referencePortion, setReferencePortion] = useState(100);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -417,12 +469,13 @@ export default function SearchPage() {
 
   const refFood = searchQuery.data?.referenceFood ?? null;
   const similarFoods = searchQuery.data?.similarFoods ?? [];
+  const refScale = referencePortion / 100;
   const referenceForCard: MacroRef | undefined = refFood
     ? {
-        calories: refFood.calories ?? 0,
-        protein: refFood.protein ?? 0,
-        carbs: refFood.carbs ?? 0,
-        fat: refFood.fat ?? 0,
+        calories: (refFood.calories ?? 0) * refScale,
+        protein: (refFood.protein ?? 0) * refScale,
+        carbs: (refFood.carbs ?? 0) * refScale,
+        fat: (refFood.fat ?? 0) * refScale,
       }
     : undefined;
 
@@ -870,6 +923,7 @@ export default function SearchPage() {
                   })),
                 }}
                 darkMode={darkMode}
+                onPortionChange={setReferencePortion}
               />
             </div>
 
