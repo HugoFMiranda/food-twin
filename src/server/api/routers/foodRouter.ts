@@ -1,6 +1,8 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { getAIFoodData, isAISearchAvailable } from "food-twin/server/ai";
+import { checkRateLimit } from "food-twin/server/rate-limit";
 
 const FilterSchema = z.object({
   minProteinRatio: z.number().min(0).max(1).optional(),
@@ -184,7 +186,20 @@ export const foodRouter = createTRPCRouter({
 
   getAISimilarFoods: publicProcedure
     .input(z.object({ foodName: z.string().min(1).max(200) }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      const ip =
+        ctx.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+        ctx.headers.get("x-real-ip") ??
+        "unknown";
+
+      const rate = checkRateLimit(`ai:${ip}`);
+      if (!rate.allowed) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: `AI search rate limit exceeded. Try again in ${rate.retryAfterSeconds}s.`,
+        });
+      }
+
       const data = await getAIFoodData(input.foodName);
 
       const ref = data.referenceFood;
